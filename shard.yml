@@ -1,9 +1,16 @@
 name: topia
 version: 0.1.0
-
+crystal: 1.0.0
+license: MIT
 authors:
   - Elias J. Perez <eliasjpr@gmail.com>
 
-crystal: 1.0.0
+targets:
+  topia:
+    main: src/topia.cr
 
-license: MIT
+dependencies:
+  termspinner:
+    github: eliobr/termspinner
+  watcher:
+    github: faustinoaq/watcher
