@@ -1,8 +1,10 @@
 module Topia
   class Task
+    include Watcher
+
     getter name, pipe, watch, dist, watch_path, dist_path, watch_block
     setter pipe
-    getter spi : Spinner::Spinner = Topia.spi
+    getter spi : Spinner = Topia.spi
 
     @pipe : Pipe(Bool) | Pipe(Array(InputFile)) | Pipe(String)
 

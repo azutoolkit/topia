@@ -8,5 +8,3 @@ authors:
 dependencies:
   termspinner:
     github: eliobr/termspinner
-  watcher:
-    github: faustinoaq/watcher

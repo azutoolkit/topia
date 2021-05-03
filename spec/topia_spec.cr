@@ -33,9 +33,9 @@ describe Topia do
 
     Topia.default("default_task")
     Topia.run_default
-    exists = File.exists?("default1.txt")
+
+    File.exists?("default1.txt").should eq true
     Topia.run("default_task_cleanup")
-    exists.should eq true
   end
 
   it "works with multiple default tasks" do

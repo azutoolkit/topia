@@ -2,9 +2,8 @@ class Generator
   include Topia::Plugin
 
   def run(input, params)
-    @spi.message = "Generating Endpoint!"
+    announce "Generating Endpoint!"
     name, route, request, response = params
-
     method, path = route.split(":/")
     
     File.open("./playground/endpoints/#{name.downcase}.cr", "w") do |file|
@@ -19,11 +18,11 @@ class Generator
       end
       CONTENT
     end
-    @spi.message = "Done Generating Endpoint!"
+    announce "Done Generating Endpoint!"
     true
   end
 
   def on(event : String)
-    @spi.message = " Hello from event: #{event}"
+    announce " Hello from event: #{event}"
   end
 end

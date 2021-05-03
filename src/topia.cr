@@ -1,7 +1,8 @@
-require "watcher"
-require "termspinner"
+require "colorize"
 require "log"
 
+require "./topia/spinner"
+require "./topia/watcher"
 require "./topia/command"
 require "./topia/error"
 require "./topia/input_file"
@@ -15,7 +16,7 @@ module Topia
 
   class_property? debug = false
   class_getter logger = Log.for("Topia")
-  class_getter spi = Spinner::Spinner.new("Waiting...")
+  class_getter spi = Spinner.new("Waiting...")
 
   @@tasks = [] of Task
   @@default_tasks : Array(String) = [] of String
@@ -37,7 +38,7 @@ module Topia
   end
 
   # Run a task
-  def self.run(name : String, params : Array(String))
+  def self.run(name : String, params : Array(String) = [] of String)
     @@tasks.each do |task|
       if name == task.name
         task.run(params)
@@ -48,12 +49,14 @@ module Topia
   # Override to run multiple tasks
   # To be used for default tasks.
   def self.run(tasks : Array)
-    # Split the string into arguments
-    # grab the name of the task,
-    # grab the arguments for the task
     tasks.each do |task|
-      run_task, command = task.split("\s")
-      self.run(run_task, command.split("\s"))
+      begin
+        run_task, command = task.split(/\s/)
+        self.run run_task, command.split(/\s/)
+      rescue
+        run_task = task
+        self.run(task)
+      end
     end
   end
 
