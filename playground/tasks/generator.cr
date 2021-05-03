@@ -5,7 +5,7 @@ class Generator
     announce "Generating Endpoint!"
     name, route, request, response = params
     method, path = route.split(":/")
-    
+
     File.open("./playground/endpoints/#{name.downcase}.cr", "w") do |file|
       file.puts <<-CONTENT
       class #{name.camelcase}Endpoint
