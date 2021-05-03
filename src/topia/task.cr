@@ -92,7 +92,7 @@ module Topia
 
       # 1.5 is the sweet spot.
       # This is implemented so the watcher doesn't pick up the changes created by .dist
-      delay (1.5) { @watch_block = false }
+      # delay (1.5) { @watch_block = false }
       self
     end
 

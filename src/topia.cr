@@ -8,6 +8,7 @@ require "./topia/input_file"
 require "./topia/pipe"
 require "./topia/plugin"
 require "./topia/task"
+require "./topia/cli"
 
 module Topia
   VERSION = "0.1.0"

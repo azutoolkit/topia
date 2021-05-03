@@ -5,10 +5,6 @@ license: MIT
 authors:
   - Elias J. Perez <eliasjpr@gmail.com>
 
-targets:
-  topia:
-    main: src/topia.cr
-
 dependencies:
   termspinner:
     github: eliobr/termspinner
