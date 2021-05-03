@@ -1,6 +1,8 @@
 module Topia
   module Plugin
-    abstract def run(input)
+    @spi : Spinner::Spinner = Topia.spi
+
+    abstract def run(input, args)
     abstract def on(event : String)
   end
 end

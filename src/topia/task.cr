@@ -2,14 +2,14 @@ module Topia
   class Task
     getter name, pipe, watch, dist, watch_path, dist_path, watch_block
     setter pipe
+    getter spi : Spinner::Spinner = Topia.spi
 
     @pipe : Pipe(Bool) | Pipe(Array(InputFile)) | Pipe(String)
 
-    def initialize(@name : String, @debug = false, **args)
+    def initialize(@name : String, @debug = false)
       @pipe_classes = [] of Plugin
       @pipe = Pipe(Bool).new(false)
       @commands = [] of Command
-      @spi = Spinner::Spinner.new("Waiting...")
       @watch = false
       @dist = false
       @watch_path = ""
@@ -18,7 +18,7 @@ module Topia
       @watch_block = false
     end
 
-    def run
+    def run(params : Array(String))
       @spi.start("Running Task '#{name}'..")
 
       @commands.each do |command|
@@ -30,23 +30,24 @@ module Topia
       end
 
       if @watch
-        @spi.message = "Watching for changes in #{@watch_path}.." 
+        @spi.message = "Watching for changes in #{@watch_path}.."
         run_watch
       else
-        run_pipe
+        run_pipe(params)
       end
 
       @spi.success("Task '#{name}' finished successfully.")
       self
     end
 
-    private def run_pipe
+    private def run_pipe(params : Array(String))
       previous_value = @pipe.value
-      self.debug(previous_value)
+      debug(previous_value)
+
       @pipe_classes.each do |instance|
         instance.on("pre_run")
-        previous_value = instance.run(previous_value)
-        self.debug(previous_value)
+        previous_value = instance.run(previous_value, params)
+        debug(previous_value)
         instance.on("after_run")
 
         if previous_value.is_a?(Nil)
@@ -106,7 +107,7 @@ module Topia
       watch @watch_path do |event|
         event.on_change do |files|
           if !@watch_block
-            run_pipe
+            run_pipe [] of String
             @spi.success("Watch pipeline executed successfully.")
           end
         end

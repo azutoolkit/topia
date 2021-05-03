@@ -13,15 +13,15 @@ module Topia
   VERSION = "0.1.0"
 
   class_property? debug = false
+  class_getter logger = Log.for("Topia")
+  class_getter spi = Spinner::Spinner.new("Waiting...")
 
   @@tasks = [] of Task
-  @@spi = Spinner::Spinner.new("Waiting...")
-  @@logger = Log.for("Topia")
   @@default_tasks : Array(String) = [] of String
 
   # Creates a new task
-  def self.task(name : String, **args)
-    task = Task.new(name, debug?,  **args)
+  def self.task(name : String)
+    task = Task.new(name, debug?)
     @@tasks.push(task.as(Topia::Task))
     self.debug("Task '#{name}' created.")
     task
@@ -36,10 +36,10 @@ module Topia
   end
 
   # Run a task
-  def self.run(name : String)
+  def self.run(name : String, params : Array(String))
     @@tasks.each do |task|
       if name == task.name
-        task.run
+        task.run(params)
       end
     end
   end
@@ -47,8 +47,12 @@ module Topia
   # Override to run multiple tasks
   # To be used for default tasks.
   def self.run(tasks : Array)
+    # Split the string into arguments
+    # grab the name of the task,
+    # grab the arguments for the task
     tasks.each do |task|
-      self.run(task)
+      run_task, command = task.split("\s")
+      self.run(run_task, command.split("\s"))
     end
   end
 
