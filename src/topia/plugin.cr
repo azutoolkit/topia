@@ -6,5 +6,10 @@ module Topia
     def announce(message)
       Topia.spi.message = message
     end
+
+
+    def error(message)
+      Topia.spi.error message
+    end
   end
 end
