@@ -42,11 +42,11 @@ Topia::CLI.run
 
 ### Efficient
 
-By using gulp streams, you can apply many transformations to your files while in memory before anything is written to the disk—significantly speeding up your build process.
+By using Topia streams, you can apply many transformations to your files while in memory before anything is written to the disk—significantly speeding up your build process.
 
 ### Extensible
 
-Using community-built plugins is a quick way to get started with gulp. Each plugin does a small amount of work, so you can connect them like building blocks. Chain together plugins from a variety of technologies to reach your desired result.
+Using community-built plugins is a quick way to get started with Topia. Each plugin does a small amount of work, so you can connect them like building blocks. Chain together plugins from a variety of technologies to reach your desired result.
 
 ```crystal
 class Generator

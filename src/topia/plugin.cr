@@ -4,11 +4,11 @@ module Topia
     abstract def on(event : String)
 
     def announce(message)
-      Topia.spi.message = message
+      SPINNER.message = message
     end
 
     def error(message)
-      Topia.spi.error message
+      SPINNER.error message
     end
   end
 end

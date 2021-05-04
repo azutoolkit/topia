@@ -4,7 +4,7 @@ module Topia
 
     getter name, pipe, watch, dist, watch_path, dist_path, watch_block
     setter pipe
-    getter spi : Spinner = Topia.spi
+    getter spi : Spinner = Topia::SPINNER
 
     @pipe : Pipe(Bool) | Pipe(Array(InputFile)) | Pipe(String)
 
@@ -16,12 +16,11 @@ module Topia
       @dist = false
       @watch_path = ""
       @dist_path = ""
-
       @watch_block = false
     end
 
     def run(params : Array(String))
-      @spi.start("Running Task '#{name}'..")
+      spi.start("Running Task '#{name}'..")
 
       @commands.each do |command|
         begin
@@ -32,13 +31,13 @@ module Topia
       end
 
       if @watch
-        @spi.message = "Watching for changes in #{@watch_path}.."
-        run_watch
+        spi.message = "Watching for changes in #{@watch_path}.."
+        run_watch(params)
       else
         run_pipe(params)
       end
 
-      @spi.success("Task '#{name}' finished successfully.")
+      spi.success("Task '#{name}' finished successfully.")
       self
     end
 
@@ -105,12 +104,12 @@ module Topia
       self
     end
 
-    def run_watch
+    def run_watch(params)
       watch @watch_path do |event|
         event.on_change do |files|
           if !@watch_block
-            run_pipe [] of String
-            @spi.success("Watch pipeline executed successfully.")
+            run_pipe params
+            spi.success("Watch pipeline executed successfully.")
           end
         end
       end
@@ -146,7 +145,7 @@ module Topia
     end
 
     private def debug(value)
-      @spi.message = "Previous value of pipeline: #{value.to_s}" if @debug
+      spi.message = "Previous value of pipeline: #{value.to_s}" if @debug
     end
   end
 end
