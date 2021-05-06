@@ -14,7 +14,6 @@ module Topia
   VERSION = "0.1.0"
   SPINNER = Spinner.new("Waiting...")
 
-  macro included
     class_property? debug = false
     class_getter logger = Log.for("Topia")
     class_getter 
@@ -80,5 +79,4 @@ module Topia
     private def self.debug(message)
       @@logger.debug { message } if debug?
     end
-  end
 end
