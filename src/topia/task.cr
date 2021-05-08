@@ -97,9 +97,9 @@ module Topia
       self
     end
 
-    def watch(dir)
+    def watch(dir : String, read_sources? = false)
       @watch_path = dir
-      src(@watch_path)
+      src(@watch_path) if read_sources?
       @watch = true
       self
     end
