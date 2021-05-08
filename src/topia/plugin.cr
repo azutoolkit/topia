@@ -10,5 +10,9 @@ module Topia
     def error(message)
       SPINNER.error message
     end
+
+    def success(message)
+      SPINNER.success message
+    end
   end
 end
