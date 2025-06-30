@@ -175,10 +175,10 @@ module Topia
       available_tasks.each do |task|
         dependencies = Topia.task_dependencies(task.name)
         status = if dependencies.empty?
-          "○".colorize(:blue)
-        else
-          "●".colorize(:green)
-        end
+                   "○".colorize(:blue)
+                 else
+                   "●".colorize(:green)
+                 end
 
         puts "  #{status} #{task.name.colorize(:white)}"
 

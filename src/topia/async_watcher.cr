@@ -33,7 +33,7 @@ module Topia
 
     def initialize(@patterns = [] of String, @debounce_time = 100.milliseconds)
       @running = false
-      @event_channel = Channel(FileEvent).new(100)  # Buffered channel
+      @event_channel = Channel(FileEvent).new(100) # Buffered channel
       @callback_channel = Channel(ChangeCallback).new
       @stop_channel = Channel(Bool).new
       @last_events = {} of String => Time
@@ -70,7 +70,7 @@ module Topia
       return unless @running
       @running = false
       @stop_channel.send(true)
-      sleep(50.milliseconds)  # Let fiber finish processing
+      sleep(50.milliseconds) # Let fiber finish processing
     end
 
     private def run_event_loop
@@ -140,20 +140,20 @@ module Topia
 
     # Linux: Use inotify for efficient file system monitoring
     {% if flag?(:linux) %}
-    private def watch_with_inotify(dir : String, pattern : String)
-      # Implementation would use Linux inotify API
-      # For now, fall back to optimized polling
-      watch_with_polling(dir, pattern)
-    end
+      private def watch_with_inotify(dir : String, pattern : String)
+        # Implementation would use Linux inotify API
+        # For now, fall back to optimized polling
+        watch_with_polling(dir, pattern)
+      end
     {% end %}
 
     # macOS: Use FSEvents for efficient file system monitoring
     {% if flag?(:darwin) %}
-    private def watch_with_fsevents(dir : String, pattern : String)
-      # Implementation would use macOS FSEvents API
-      # For now, fall back to optimized polling
-      watch_with_polling(dir, pattern)
-    end
+      private def watch_with_fsevents(dir : String, pattern : String)
+        # Implementation would use macOS FSEvents API
+        # For now, fall back to optimized polling
+        watch_with_polling(dir, pattern)
+      end
     {% end %}
 
     # Optimized polling fallback with smart caching
@@ -164,7 +164,7 @@ module Topia
       scan_files(dir, pattern, file_cache)
 
       while @running
-        sleep(250.milliseconds)  # More efficient than previous implementation
+        sleep(250.milliseconds) # More efficient than previous implementation
 
         current_files = {} of String => File::Info
         scan_files(dir, pattern, current_files)
@@ -195,40 +195,40 @@ module Topia
     end
 
     private def detect_changes(old_cache : Hash(String, File::Info), new_cache : Hash(String, File::Info))
-              # Detect new files
-        new_cache.each do |path, info|
-          unless old_cache.has_key?(path)
-            # Non-blocking send
-            select
-            when @event_channel.send(FileEvent.new(path, EventType::Created))
-              # Event sent
-            when timeout(1.millisecond)
-              # Channel full, skip this event
-            end
+      # Detect new files
+      new_cache.each do |path, info|
+        unless old_cache.has_key?(path)
+          # Non-blocking send
+          select
+          when @event_channel.send(FileEvent.new(path, EventType::Created))
+            # Event sent
+          when timeout(1.millisecond)
+            # Channel full, skip this event
           end
         end
+      end
 
-        # Detect modified files
-        old_cache.each do |path, old_info|
-          if new_info = new_cache[path]?
-            if new_info.modification_time > old_info.modification_time
-              select
-              when @event_channel.send(FileEvent.new(path, EventType::Modified))
-                # Event sent
-              when timeout(1.millisecond)
-                # Channel full, skip this event
-              end
-            end
-          else
-            # File was deleted
+      # Detect modified files
+      old_cache.each do |path, old_info|
+        if new_info = new_cache[path]?
+          if new_info.modification_time > old_info.modification_time
             select
-            when @event_channel.send(FileEvent.new(path, EventType::Deleted))
+            when @event_channel.send(FileEvent.new(path, EventType::Modified))
               # Event sent
             when timeout(1.millisecond)
               # Channel full, skip this event
             end
           end
+        else
+          # File was deleted
+          select
+          when @event_channel.send(FileEvent.new(path, EventType::Deleted))
+            # Event sent
+          when timeout(1.millisecond)
+            # Channel full, skip this event
+          end
         end
+      end
     end
   end
 

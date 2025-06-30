@@ -4,7 +4,7 @@ module Topia
   # Configuration management for Topia projects
   class Config
     # Configuration structure
-        struct TaskConfig
+    struct TaskConfig
       include YAML::Serializable
 
       property description : String? = nil
@@ -47,7 +47,6 @@ module Topia
 
         # Process the loaded configuration
         process_configuration
-
       rescue ex : YAML::ParseException
         raise Error.new("Invalid YAML in configuration file '#{file_path}': #{ex.message}")
       rescue ex
@@ -69,36 +68,36 @@ module Topia
 
     def self.create_sample_config(file_path : String = "topia.yml")
       sample_config = {
-        "name" => "My Project",
-        "version" => "1.0.0",
+        "name"        => "My Project",
+        "version"     => "1.0.0",
         "description" => "A sample Topia project configuration",
-        "variables" => {
+        "variables"   => {
           "build_dir" => "./build",
-          "src_dir" => "./src"
+          "src_dir"   => "./src",
         },
         "default_tasks" => ["build"],
-        "tasks" => {
+        "tasks"         => {
           "clean" => {
             "description" => "Clean build directory",
-            "commands" => ["rm -rf ${build_dir}"]
+            "commands"    => ["rm -rf ${build_dir}"],
           },
           "build" => {
-            "description" => "Build the project",
+            "description"  => "Build the project",
             "dependencies" => ["clean"],
-            "sources" => ["${src_dir}/**/*.cr"],
-            "commands" => ["crystal build src/main.cr -o ${build_dir}/app"]
+            "sources"      => ["${src_dir}/**/*.cr"],
+            "commands"     => ["crystal build src/main.cr -o ${build_dir}/app"],
           },
           "test" => {
             "description" => "Run tests",
-            "commands" => ["crystal spec"]
+            "commands"    => ["crystal spec"],
           },
           "dev" => {
-            "description" => "Development mode with file watching",
-            "watch" => "${src_dir}",
+            "description"   => "Development mode with file watching",
+            "watch"         => "${src_dir}",
             "watch_sources" => true,
-            "commands" => ["crystal run src/main.cr"]
-          }
-        }
+            "commands"      => ["crystal run src/main.cr"],
+          },
+        },
       }
 
       File.write(file_path, sample_config.to_yaml)
@@ -149,7 +148,7 @@ module Topia
       validate_task_dependencies
     end
 
-        private def self.create_task_from_config(name : String, config : TaskConfig)
+    private def self.create_task_from_config(name : String, config : TaskConfig)
       task = Topia.task(name)
 
       # Add dependencies

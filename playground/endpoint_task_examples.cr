@@ -45,9 +45,9 @@ puts "   ✓ Setup + Generate pattern: #{endpoint_with_setup.name}".colorize(:wh
 
 # 2. Multiple endpoint types
 api_endpoints = [
-  { name: "user", route: "GET:/api/users/:id", req: "GetUserRequest", res: "UserResponse" },
-  { name: "post", route: "POST:/api/posts", req: "CreatePostRequest", res: "PostResponse" },
-  { name: "comment", route: "PUT:/api/comments/:id", req: "UpdateCommentRequest", res: "CommentResponse" }
+  {name: "user", route: "GET:/api/users/:id", req: "GetUserRequest", res: "UserResponse"},
+  {name: "post", route: "POST:/api/posts", req: "CreatePostRequest", res: "PostResponse"},
+  {name: "comment", route: "PUT:/api/comments/:id", req: "UpdateCommentRequest", res: "CommentResponse"},
 ]
 
 api_endpoints.each do |endpoint|
@@ -71,7 +71,7 @@ puts "   ✓ Batch generation task: #{batch_generate.name}".colorize(:white)
 # 4. Development workflow with watching
 dev_endpoints = Topia.task("dev_endpoints")
   .depends_on("setup_endpoints")
-  .watch("./spec/support/*.txt", read_sources: true)  # Watch for spec changes
+  .watch("./spec/support/*.txt", read_sources: true) # Watch for spec changes
   .pipe(Generator.new)
   .command("echo 'Development endpoints updated'")
 
@@ -110,7 +110,7 @@ puts "2. Generate multiple endpoints:".colorize(:cyan)
 endpoints_config = [
   ["Dashboard", "GET:/dashboard", "DashboardRequest", "DashboardResponse"],
   ["Settings", "PUT:/settings", "UpdateSettingsRequest", "SettingsResponse"],
-  ["Profile", "GET:/profile", "GetProfileRequest", "ProfileResponse"]
+  ["Profile", "GET:/profile", "GetProfileRequest", "ProfileResponse"],
 ]
 
 endpoints_config.each do |config|

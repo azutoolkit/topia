@@ -171,9 +171,9 @@ end
 
 # Create tasks from configuration-like data
 task_configs = [
-  { name: "lint", command: "echo 'Linting code...'" },
-  { name: "format", command: "echo 'Formatting code...'" },
-  { name: "audit", command: "echo 'Security audit...'" }
+  {name: "lint", command: "echo 'Linting code...'"},
+  {name: "format", command: "echo 'Formatting code...'"},
+  {name: "audit", command: "echo 'Security audit...'"},
 ]
 
 task_configs.each do |config|

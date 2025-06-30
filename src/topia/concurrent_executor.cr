@@ -99,7 +99,7 @@ module Topia
         wait_for_completion(jobs.size)
       ensure
         stop_workers
-        sleep(50.milliseconds) if progress_fiber  # Let progress fiber finish
+        sleep(50.milliseconds) if progress_fiber # Let progress fiber finish
         @spinner_pool.stop_all
       end
 
@@ -220,7 +220,6 @@ module Topia
         # Execute with caching if enabled
         @cached_executor.execute_with_cache(job.task)
         success = true
-
       rescue ex
         error = ex
         success = false

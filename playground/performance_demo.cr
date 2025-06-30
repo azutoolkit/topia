@@ -78,7 +78,7 @@ File.write(test_file, "Modified content")
 sleep(0.2.seconds)
 
 watcher.stop
-sleep(50.milliseconds)  # Let watcher fiber finish
+sleep(50.milliseconds) # Let watcher fiber finish
 File.delete(test_file)
 
 puts "   File watcher demonstration complete!"

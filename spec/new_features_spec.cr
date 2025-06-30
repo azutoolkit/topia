@@ -63,7 +63,7 @@ describe "New Topia Features" do
       # Test variable substitution (private method, so we test indirectly)
       variables = {"build_path" => "/tmp/build"}
       result = config_content.gsub(/\$\{([^}]+)\}/) do |match|
-        key = match[2..-2]  # Remove ${ and }
+        key = match[2..-2] # Remove ${ and }
         variables[key]? || match
       end
 

@@ -49,7 +49,7 @@ module Topia
       end
     end
 
-        private def run_pipeline(params : Array(String))
+    private def run_pipeline(params : Array(String))
       return unless current_pipeline = @pipeline
 
       builder = PipelineBuilder.new

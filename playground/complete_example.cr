@@ -9,34 +9,34 @@ puts "Creating sample configuration file..."
 
 # Create a sample configuration
 sample_config = {
-  "name" => "Demo Project",
-  "version" => "1.0.0",
+  "name"        => "Demo Project",
+  "version"     => "1.0.0",
   "description" => "Demonstrating all Topia features",
-  "variables" => {
-    "src_dir" => "./src",
-    "build_dir" => "./build"
+  "variables"   => {
+    "src_dir"   => "./src",
+    "build_dir" => "./build",
   },
   "default_tasks" => ["build"],
-  "tasks" => {
+  "tasks"         => {
     "clean" => {
       "description" => "Clean build directory",
-      "commands" => ["echo 'Cleaning ${build_dir}'"]
+      "commands"    => ["echo 'Cleaning ${build_dir}'"],
     },
     "compile" => {
       "description" => "Compile source files",
-      "commands" => ["echo 'Compiling from ${src_dir}'"]
+      "commands"    => ["echo 'Compiling from ${src_dir}'"],
     },
     "test" => {
-      "description" => "Run tests",
+      "description"  => "Run tests",
       "dependencies" => ["compile"],
-      "commands" => ["echo 'Running tests'"]
+      "commands"     => ["echo 'Running tests'"],
     },
     "build" => {
-      "description" => "Build the project",
+      "description"  => "Build the project",
       "dependencies" => ["clean", "test"],
-      "commands" => ["echo 'Building project'"]
-    }
-  }
+      "commands"     => ["echo 'Building project'"],
+    },
+  },
 }
 
 # Write temporary config file
@@ -80,7 +80,7 @@ begin
     ["-v"],
     ["-l"],
     ["-d", "build"],
-    ["-p", "clean", "compile"]
+    ["-p", "clean", "compile"],
   ]
 
   test_args.each do |args|
@@ -131,7 +131,6 @@ begin
   execution_order.each_with_index do |task, index|
     puts "    #{index + 1}. #{task}"
   end
-
 ensure
   # Clean up
   File.delete(config_file) if File.exists?(config_file)

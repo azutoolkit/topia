@@ -58,7 +58,6 @@ module Topia
     def put(task_name : String, input_data : String, output_data : String,
             dependencies : Array(String), file_dependencies : Array(String),
             success : Bool, result_data : String? = nil)
-
       key = cache_key(task_name, input_data, dependencies)
       input_hash = Digest::SHA256.hexdigest(input_data)
       output_hash = Digest::SHA256.hexdigest(output_data)
@@ -126,9 +125,9 @@ module Topia
       end
 
       {
-        entries: @cache_entries.size,
-        size_mb: size_bytes / (1024.0 * 1024.0),
-        hit_rate: calculate_hit_rate
+        entries:  @cache_entries.size,
+        size_mb:  size_bytes / (1024.0 * 1024.0),
+        hit_rate: calculate_hit_rate,
       }
     end
 
@@ -287,11 +286,11 @@ module Topia
       hit_rate = @hit_count.to_f / (@hit_count + @miss_count) * 100
 
       {
-        cache_entries: stats[:entries],
-        cache_size_mb: stats[:size_mb],
+        cache_entries:  stats[:entries],
+        cache_size_mb:  stats[:size_mb],
         cache_hit_rate: hit_rate,
-        total_hits: @hit_count,
-        total_misses: @miss_count
+        total_hits:     @hit_count,
+        total_misses:   @miss_count,
       }
     end
 

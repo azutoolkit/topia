@@ -30,7 +30,7 @@ module Topia
       end
     end
 
-        def stop
+    def stop
       return unless @running
 
       @control_channel.send(:stop)
