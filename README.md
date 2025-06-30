@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/azutoolkit/topia/master/topia.png" alt="Topia Logo" width="200"/>
+  <img src="https://raw.githubusercontent.com/azutoolkit/topia/master/topia.png" alt="Topia Logo"/>
 
 # 🌟 Topia
 
