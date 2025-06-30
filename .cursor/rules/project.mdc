@@ -1,0 +1,340 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Topia Project Documentation
+
+## 🌟 Project Overview
+
+**Topia** is a Crystal-based task automation and build pipeline tool, similar to Gulp.js or Webpack. It provides a flexible, composable system for automating development workflows through a pipeline-based architecture.
+
+### Key Features
+- **Pipeline-based Architecture**: Chain operations through a pipe system
+- **File Watching**: Monitor file changes and trigger automated tasks
+- **Plugin System**: Extensible through custom plugins
+- **Command Integration**: Execute shell commands as part of workflows
+- **Task Composition**: Combine simple tasks into complex workflows
+
+## 🏗️ Architecture
+
+### Core Components
+
+```
+src/topia/
+├── command.cr      # Shell command wrapper
+├── error.cr        # Error handling
+├── input_file.cr   # File representation for pipeline
+├── pipe.cr         # Pipeline data container
+├── plugin.cr       # Plugin interface
+├── spinner.cr      # CLI spinner/progress indicator
+├── task.cr         # Main task orchestrator
+└── watcher.cr      # File system watcher
+```
+
+### Component Relationships
+
+```mermaid
+graph TB
+    A[Task] --> B[Pipe]
+    A --> C[Plugin]
+    A --> D[Command]
+    A --> E[Watcher]
+    B --> F[InputFile]
+    G[Spinner] --> A
+    H[Error] --> A
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Crystal 1.0.0+
+- Git
+
+### Installation
+
+1. **Clone the repository:**
+```bash
+git clone https://github.com/azutoolkit/topia.git
+cd topia
+```
+
+2. **Install dependencies:**
+```bash
+shards install
+```
+
+3. **Build the project:**
+```bash
+crystal build src/topia.cr
+```
+
+### Basic Usage
+
+```crystal
+require "topia"
+
+# Create a simple task
+Topia.task("hello")
+  .command("echo 'Hello, World!'")
+
+# Create a file processing task
+Topia.task("process-files")
+  .src("./input/*.txt")
+  .pipe(MyProcessor.new)
+  .dist("./output/")
+
+# Run tasks
+Topia.run("hello")
+```
+## 📚 API Documentation
+
+### Core Classes
+
+#### `Topia::Task`
+Main orchestrator for task execution.
+
+**Key Methods:**
+- `src(path, mode = "w")` - Load files from path pattern
+- `pipe(plugin)` - Add plugin to processing pipeline
+- `command(cmd)` - Add shell command to task
+- `watch(dir, read_sources = false)` - Enable file watching
+- `dist(path)` - Set output directory
+- `run(params)` - Execute the task
+
+#### `Topia::Plugin`
+Interface for creating custom processors.
+
+```crystal
+class MyPlugin
+  include Topia::Plugin
+
+  def run(input, args)
+    # Process input and return result
+    processed_input
+  end
+
+  def on(event : String)
+    # Handle lifecycle events
+  end
+end
+```
+
+#### `Topia::Pipe(T)`
+Generic container for pipeline data.
+
+- `value` - Current pipeline value
+- `pipe(plugin)` - Apply plugin transformation
+- `type` - Get the type of contained value
+
+### Task Creation Patterns
+
+#### Simple Command Task
+```crystal
+Topia.task("build")
+  .command("crystal build src/main.cr")
+```
+
+#### File Processing Pipeline
+```crystal
+Topia.task("process-css")
+  .src("./scss/*.scss")
+  .pipe(SassCompiler.new)
+  .pipe(CssMinifier.new)
+  .dist("./public/css/")
+```
+
+#### Watched Development Task
+```crystal
+Topia.task("dev")
+  .watch("./src/**/*.cr", read_sources: true)
+  .pipe(CrystalCompiler.new)
+  .command("./bin/app")
+```
+
+## 🔧 Development Guidelines
+
+### Code Style
+- Follow [Crystal Style Guide](mdc:https:/crystal-lang.org/reference/conventions/coding_style.html)
+- Use meaningful variable and method names
+- Include type annotations for public APIs
+- Write comprehensive specs
+
+### Project Structure
+```
+topia/
+├── src/topia/          # Core library code
+├── spec/               # Test specifications
+├── playground/         # Development examples
+├── lib/                # Dependencies (managed by shards)
+└── README.md           # Project documentation
+```
+
+### Testing
+Run the test suite:
+```bash
+crystal spec
+```
+
+Create specs for new features in `spec/` directory following existing patterns.
+
+### Plugin Development
+
+Create plugins by including `Topia::Plugin`:
+
+```crystal
+class MyPlugin
+  include Topia::Plugin
+
+  def run(input, args)
+    announce "Processing #{input}..."
+
+    # Your processing logic here
+    result = process(input)
+
+    success "Processing complete!"
+    result
+  end
+
+  def on(event : String)
+    case event
+    when "pre_run"
+      # Setup logic
+    when "after_run"
+      # Cleanup logic
+    end
+  end
+
+  private def process(input)
+    # Implementation details
+  end
+end
+```
+
+## 🛠️ Current Issues & Limitations
+
+### Type Safety Issues
+- `Task#@pipe` uses union types unsafely
+- Runtime type checking instead of compile-time verification
+- Plugin return value validation is minimal
+
+### Architecture Problems
+- `Task` class violates Single Responsibility Principle
+- Mixing of concerns (command execution, file watching, pipeline management)
+- No proper error hierarchy
+
+### Missing Features
+- No CLI implementation (referenced but not created)
+- No task dependencies or ordering
+- No parallel task execution
+- No configuration file support
+- Basic error handling
+
+## 🎯 Improvement Roadmap
+
+### Phase 1: Core Stability
+- [ ] Implement proper CLI with help system
+- [ ] Fix type safety issues in pipeline
+- [ ] Create comprehensive error hierarchy
+- [ ] Add input validation and better error messages
+
+### Phase 2: Enhanced Features
+- [ ] Task dependency system
+- [ ] Configuration file support (YAML/JSON)
+- [ ] Parallel task execution
+- [ ] Improved file watching with proper FS events
+
+### Phase 3: Developer Experience
+- [ ] Plugin management system
+- [ ] Built-in common plugins (minification, compilation, etc.)
+- [ ] Task result caching
+- [ ] Comprehensive documentation and examples
+
+### Phase 4: Performance & Scalability
+- [ ] Async/concurrent execution with Fibers
+- [ ] Memory-efficient file processing
+- [ ] Performance monitoring and optimization
+- [ ] Large project support
+
+## 🤝 Contributing
+
+### Getting Started
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Make your changes with tests
+4. Run the test suite: `crystal spec`
+5. Submit a pull request
+
+### Code Review Process
+- All changes require review
+- Tests must pass
+- Follow existing code style
+- Update documentation for new features
+
+### Bug Reports
+Use GitHub issues with:
+- Crystal version
+- Operating system
+- Minimal reproduction case
+- Expected vs actual behavior
+
+## 📋 Development Checklist
+
+When working on topia:
+
+### Before Starting
+- [ ] Understand the existing architecture
+- [ ] Review related issues/PRs
+- [ ] Set up development environment
+- [ ] Run existing tests
+
+### During Development
+- [ ] Write tests for new functionality
+- [ ] Follow Crystal style guide
+- [ ] Add proper error handling
+- [ ] Update documentation
+- [ ] Test with various input scenarios
+
+### Before Submitting
+- [ ] All tests pass
+- [ ] Code is properly formatted
+- [ ] Documentation is updated
+- [ ] Breaking changes are documented
+- [ ] Performance impact is considered
+
+## 🔍 Debugging Tips
+
+### Common Issues
+1. **Type errors in pipelines**: Check plugin return types
+2. **File watching not working**: Verify file paths and permissions
+3. **Commands failing**: Check shell command syntax and PATH
+4. **Plugin errors**: Ensure proper `run` method implementation
+
+### Debug Mode
+Enable debug logging:
+```crystal
+Topia.debug = true
+```
+
+### Useful Tools
+- `crystal tool hierarchy` - View class hierarchy
+- `crystal tool implementations` - Find method implementations
+- Crystal's built-in debugger
+
+## 📖 Resources
+
+### Crystal Language
+- [Crystal Documentation](mdc:https:/crystal-lang.org/reference)
+- [Crystal API](mdc:https:/crystal-lang.org/api)
+- [Crystal Style Guide](mdc:https:/crystal-lang.org/reference/conventions/coding_style.html)
+
+### Similar Projects
+- [Gulp.js](mdc:https:/gulpjs.com) - JavaScript task runner
+- [Webpack](mdc:https:/webpack.js.org) - Module bundler
+- [Grunt](mdc:https:/gruntjs.com) - JavaScript task runner
+
+---
+
+*Last updated: $(date)*
+*Crystal Version: 1.0.0+*
+*Project Version: 0.1.0*

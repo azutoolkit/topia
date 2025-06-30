@@ -1,151 +1,137 @@
+require "./dependency_manager"
+
 module Topia
+  # Main task orchestrator - now focuses on coordination rather than implementation
   class Task
-    include Watcher
+    getter name : String
+    getter pipeline
+    getter spi = Topia::SPINNER
 
-    getter name, pipe, watch, dist, watch_path, dist_path, watch_block
-    setter pipe
-    getter spi : Spinner = Topia::SPINNER
-
-    @pipe : Pipe(Bool) | Pipe(Array(InputFile)) | Pipe(String)
+    @command_executor : CommandExecutor
+    @file_distributor : FileDistributor
+    @task_watcher : TaskWatcher
+    @plugin_classes : Array(Plugin)
+    @dist_path : String
+    @use_dist : Bool
 
     def initialize(@name : String, @debug = false)
-      @pipe_classes = [] of Plugin
-      @pipe = Pipe(Bool).new(false)
-      @commands = [] of Command
-      @watch = false
-      @dist = false
-      @watch_path = ""
+      @command_executor = CommandExecutor.new
+      @file_distributor = FileDistributor.new
+      @task_watcher = TaskWatcher.new
+      @plugin_classes = [] of Plugin
+      @pipeline = nil
       @dist_path = ""
-      @watch_block = false
+      @use_dist = false
     end
 
-    def run(params : Array(String))
+    def run(params : Array(String) = [] of String)
       spi.start("Running Task '#{name}'..")
 
-      @commands.each do |command|
-        begin
-          run_command(command.name, command.args)
-        rescue
-          raise Error.new("Command '#{command.full}' failed on task '#{@name}'.")
-        end
-      end
+      # Execute commands first
+      @command_executor.execute_all
 
-      if @watch
-        spi.message = "Watching for changes in #{@watch_path}.."
-        run_watch(params)
+      # Handle watching or direct execution
+      if @task_watcher.watching
+        spi.message = "Watching for changes in #{@task_watcher.watch_path}.."
+        run_with_watching(params)
       else
-        run_pipe(params)
+        run_pipeline(params)
       end
 
       spi.success("Task '#{name}' finished successfully.")
       self
     end
 
-    private def run_pipe(params : Array(String))
-      previous_value = @pipe.value
-      debug(previous_value)
+    private def run_with_watching(params : Array(String))
+      @task_watcher.watch_for_changes do
+        run_pipeline(params)
+        spi.success("Watch pipeline executed successfully.")
+      end
+    end
 
-      @pipe_classes.each do |instance|
-        instance.on("pre_run")
-        previous_value = instance.run(previous_value, params)
-        debug(previous_value)
-        instance.on("after_run")
+        private def run_pipeline(params : Array(String))
+      return unless current_pipeline = @pipeline
 
-        if previous_value.is_a?(Nil)
-          raise Error.new("Pipe '#{instance.class.name}' failed for task '#{@name}'. Possible nil return?")
+      builder = PipelineBuilder.new
+      builder.start(current_pipeline.value)
+
+      @plugin_classes.each do |plugin|
+        result = PluginLifecycle.run_plugin(plugin, builder.value, params) do
+          debug(builder.value)
         end
+
+        if result.nil?
+          raise Error.new("Plugin '#{plugin.class.name}' returned nil for task '#{@name}'")
+        end
+
+        builder.pipe(plugin)
       end
 
-      run_dist if @dist
+      # Keep the pipeline as the original type by not reassigning from builder
+      run_distribution if @use_dist
     end
 
     # Load files with the given mode, according to the given path
-    def src(path, mode = "w")
+    def src(path : String, mode = "w")
       files = Dir.glob(path).map do |file_path|
         name = File.basename(file_path)
-        path = File.dirname(file_path) + "/"
+        file_dir = File.dirname(file_path) + "/"
         contents = File.read(file_path)
-        InputFile.new(name, path, contents)
+        InputFile.new(name, file_dir, contents)
       end
 
-      @pipe = Pipe(Array(InputFile)).new files
+      @pipeline = Pipe(Array(InputFile)).new(files)
       self
     end
 
-    def dist(out_path)
-      @dist = true
-      @dist_path = out_path
+    def dist(output_path : String)
+      @use_dist = true
+      @dist_path = output_path
       self
     end
 
-    def run_dist
-      @watch_block = true
-      if @pipe.type != Array(InputFile)
-        raise Error.new("dist may only be used on Array(Topia::InputFile)")
+    private def run_distribution
+      return unless current_pipeline = @pipeline
+
+      if current_pipeline.type_name != "Array(Topia::InputFile)"
+        raise Error.new("dist may only be used on Array(Topia::InputFile), got #{current_pipeline.type_name}")
       end
 
-      @pipe.value.as(Array(InputFile)).each do |file|
-        file.path = @dist_path
-        Dir.mkdir_p(@dist_path) if !Dir.exists?(@dist_path)
+      files = current_pipeline.value.as(Array(InputFile))
+      @file_distributor.distribute(files, @dist_path)
 
-        file.write
-      end
-
-      # 1.5 is the sweet spot.
-      # This is implemented so the watcher doesn't pick up the changes created by .dist
-      # delay (1.5) { @watch_block = false }
-      self
+      # Block watching temporarily to prevent recursive triggers
+      @task_watcher.block_changes
+      @task_watcher.delay(1.5) { @task_watcher.unblock_changes }
     end
 
-    def watch(dir : String, read_sources? = false)
-      @watch_path = dir
-      src(@watch_path) if read_sources?
-      @watch = true
+    def watch(dir : String, read_sources : Bool = false)
+      @task_watcher.configure(dir)
+      src(dir) if read_sources
       self
-    end
-
-    def run_watch(params)
-      watch @watch_path do |event|
-        event.on_change do |files|
-          if !@watch_block
-            run_pipe params
-            spi.success("Watch pipeline executed successfully.")
-          end
-        end
-      end
     end
 
     def pipe(plugin : Plugin)
-      @pipe_classes.push(plugin)
+      @plugin_classes.push(plugin)
       self
     end
 
-    # Process and execute raw shell commands
-    def command(command)
-      split_commands = command.split("&&")
-
-      split_commands.each do |text_command|
-        text_command = text_command.chomp
-        command_args = command.split(" ")
-        command_name = command_args.delete_at(0)
-        @commands.push(Command.new(command_name, command_args, text_command))
-      end
-
+    def command(command : String)
+      @command_executor.add_command(command)
       self
     end
 
-    def delay(duration : Float64)
-      sleep duration
-      yield
+    def depends_on(dependencies : Array(String))
+      DependencyManager.add_dependency(@name, dependencies)
+      self
     end
 
-    private def run_command(name, args)
-      status = Process.run(name, args: args)
-      status.exit_code
+    def depends_on(dependency : String)
+      depends_on([dependency])
     end
 
     private def debug(value)
-      spi.message = "Previous value of pipeline: #{value.to_s}" if @debug
+      spi.message = "Pipeline value: #{value}" if @debug
     end
   end
 end

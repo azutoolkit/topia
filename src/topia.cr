@@ -9,6 +9,13 @@ require "./topia/input_file"
 require "./topia/pipe"
 require "./topia/plugin"
 require "./topia/task"
+require "./topia/cli"
+require "./topia/dependency_manager"
+require "./topia/config"
+require "./topia/async_spinner"
+require "./topia/async_watcher"
+require "./topia/task_cache"
+require "./topia/concurrent_executor"
 
 module Topia
   VERSION = "0.1.0"
@@ -73,6 +80,50 @@ module Topia
   # Runs the default task(s)
   def self.run_default
     self.run(@@default_tasks)
+  end
+
+  # CLI entry point
+  def self.cli(args = ARGV)
+    CLI.run(args)
+  end
+
+  # Configuration file support
+  def self.configure(file_path : String)
+    Config.load_from_file(file_path)
+  end
+
+  # Parallel task execution
+  def self.run_parallel(task_names : Array(String))
+    ParallelExecutor.run_parallel(task_names)
+  end
+
+  # Task management helpers
+  def self.available_tasks : Array(Task)
+    @@tasks
+  end
+
+  def self.default_tasks : Array(String)
+    @@default_tasks
+  end
+
+  def self.find_task(name : String) : Task?
+    @@tasks.find { |task| task.name == name }
+  end
+
+  def self.task_dependencies(task_name : String) : Array(String)
+    DependencyManager.get_dependencies(task_name)
+  end
+
+  # Create sample configuration
+  def self.init(file_path : String = "topia.yml")
+    Config.create_sample_config(file_path)
+  end
+
+  # Clear all tasks (useful for testing)
+  def self.clear_tasks
+    @@tasks.clear
+    @@default_tasks.clear
+    DependencyManager.clear_dependencies
   end
 
   # Debugging utility
