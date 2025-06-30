@@ -1,11 +1,20 @@
 require "./dependency_manager"
+require "./command"
+require "./input_file"
+require "./watcher"
+require "./plugin"
+require "./pipe"
+require "./spinner"
 
 module Topia
   # Main task orchestrator - now focuses on coordination rather than implementation
   class Task
     getter name : String
-    getter pipeline
-    getter spi = Topia::SPINNER
+    getter pipeline : (Pipe(Array(InputFile)) | Pipe(String) | Pipe(Bool) | Nil)
+    getter spi : Spinner
+    getter source_file : String?
+    getter source_line : Int32?
+    property description : String?
 
     @command_executor : CommandExecutor
     @file_distributor : FileDistributor
@@ -13,6 +22,12 @@ module Topia
     @plugin_classes : Array(Plugin)
     @dist_path : String
     @use_dist : Bool
+    @pipeline : (Pipe(Array(InputFile)) | Pipe(String) | Pipe(Bool) | Nil)
+    @source_file : String?
+    @source_line : Int32?
+    @description : String?
+    @debug : Bool
+    @spi : Spinner
 
     def initialize(@name : String, @debug = false)
       @command_executor = CommandExecutor.new
@@ -22,6 +37,13 @@ module Topia
       @pipeline = nil
       @dist_path = ""
       @use_dist = false
+      @source_file = nil
+      @source_line = nil
+      @description = nil
+      @spi = Spinner.new("Waiting...")
+
+      # Try to capture source location
+      capture_source_location
     end
 
     def run(params : Array(String) = [] of String)
@@ -73,11 +95,20 @@ module Topia
 
     # Load files with the given mode, according to the given path
     def src(path : String, mode = "w")
-      files = Dir.glob(path).map do |file_path|
-        name = File.basename(file_path)
-        file_dir = File.dirname(file_path) + "/"
-        contents = File.read(file_path)
-        InputFile.new(name, file_dir, contents)
+      files = Dir.glob(path).compact_map do |file_path|
+        # Skip directories and only process files
+        next unless File.file?(file_path)
+
+        begin
+          name = File.basename(file_path)
+          file_dir = File.dirname(file_path) + "/"
+          contents = File.read(file_path)
+          InputFile.new(name, file_dir, contents)
+        rescue ex
+          # Skip files that can't be read (permissions, etc.)
+          Topia.warn("Skipping file #{file_path}: #{ex.message}") if Topia.verbose?
+          nil
+        end
       end
 
       @pipeline = Pipe(Array(InputFile)).new(files)
@@ -128,6 +159,46 @@ module Topia
 
     def depends_on(dependency : String)
       depends_on([dependency])
+    end
+
+    # Set task description for better CLI output
+    def describe(description : String)
+      @description = description
+      self
+    end
+
+    # Get pipeline information for CLI display
+    def pipeline_info : String?
+      components = [] of String
+
+      unless @command_executor.commands.empty?
+        components << "#{@command_executor.commands.size} command(s)"
+      end
+
+      unless @plugin_classes.empty?
+        plugin_names = @plugin_classes.map(&.class.name.split("::").last)
+        components << "plugins: #{plugin_names.join(" → ")}"
+      end
+
+      if @use_dist
+        components << "dist: #{@dist_path}"
+      end
+
+      if @task_watcher.watching
+        components << "watching: #{@task_watcher.watch_path}"
+      end
+
+      return nil if components.empty?
+      components.join(", ")
+    end
+
+    # Capture source location where task was defined
+    private def capture_source_location
+      # This is a simplified version - in a real implementation,
+      # you might use caller information or stack traces
+      # For now, we'll just mark it as "defined in code"
+      @source_file = "defined in code"
+      @source_line = 0
     end
 
     private def debug(value)
